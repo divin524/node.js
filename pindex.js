@@ -1,65 +1,95 @@
 const http = require('http');
-const url = require('url');
+const { v4: uuidv4 } = require('uuid');
 
-// user array
+// Temporary array to store users
 const users = [];
 
-// Create the server
-const server = http.createServer((req, res) => {
-  const parsedUrl = url.parse(req.url, true);
-  const method = req.method;
-  const path = parsedUrl.pathname;
+// Helper function to send JSON response
+function sendJSON(res, statusCode, data) {
+    res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(data));
+}
 
-  // Enable JSON responses
-  res.setHeader('Content-Type', 'application/json');
-
-  // POST /users — create a new user
-  if (path === '/users' && method === 'POST') {
-    let body = '';
-
-    // Collect data chunks
-    req.on('data', chunk => {
-      body += chunk.toString();
+// Helper function to get request body
+function getRequestBody(req) {
+    return new Promise((resolve, reject) => {
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+        req.on('end', () => {
+            try {
+                resolve(JSON.parse(body || '{}'));
+            } catch (err) {
+                reject(err);
+            }
+        });
     });
+}
 
-    // When request data is complete
-    req.on('end', () => {
-      try {
-        const data = JSON.parse(body);
-        const { name, email } = data;
+// Create HTTP server
+const server = http.createServer(async (req, res) => {
+    const reqUrl = new URL(req.url, `http://${req.headers.host}`);
+    const pathname = reqUrl.pathname;
+    const method = req.method;
 
-        // Basic validation
-        if (!name || !email) {
-          res.statusCode = 400;
-          return res.end(JSON.stringify({ error: 'Name and email are required' }));
+    // POST /users - Create new user
+    if (method === 'POST' && pathname === '/users') {
+        try {
+            const body = await getRequestBody(req);
+            const { name, email } = body;
+
+            if (!name || !email) {
+                return sendJSON(res, 400, { error: 'Name and email are required' });
+            }
+
+            const newUser = { id: uuidv4(), name, email };
+            users.push(newUser);
+
+            return sendJSON(res, 201, { message: 'User created successfully', user: newUser });
+        } catch {
+            return sendJSON(res, 400, { error: 'Invalid JSON' });
         }
+    }
 
-        // Create new user
-        const newUser = { id: users.length + 1, name, email };
-        users.push(newUser);
+    // GET /users - Get all users
+    if (method === 'GET' && pathname === '/users') {
+        return sendJSON(res, 200, users);
+    }
 
-        res.statusCode = 201;
-        res.end(JSON.stringify({ message: 'User created successfully', user: newUser }));
-      } catch (error) {
-        res.statusCode = 400;
-        res.end(JSON.stringify({ error: 'Invalid JSON format' }));
-      }
-    });
+    // GET /users/:id - Get a user by ID
+    if (method === 'GET' && pathname.startsWith('/users/')) {
+        const id = pathname.split('/')[2];
+        const user = users.find(u => u.id === id);
+        if (!user) return sendJSON(res, 404, { error: 'User not found' });
+        return sendJSON(res, 200, user);
+    }
 
-  // GET /users — list all users
-  } else if (path === '/users' && method === 'GET') {
-    res.statusCode = 200;
-    res.end(JSON.stringify(users));
+    // PUT /users/:id - Update a user by ID
+    if (method === 'PUT' && pathname.startsWith('/users/')) {
+        const id = pathname.split('/')[2];
+        const user = users.find(u => u.id === id);
+        if (!user) return sendJSON(res, 404, { error: 'User not found' });
 
-  // 404 for all other routes
-  } else {
-    res.statusCode = 404;
-    res.end(JSON.stringify({ error: 'Not found' }));
-  }
+        try {
+            const body = await getRequestBody(req);
+            const { name, email } = body;
+            if (!name && !email) return sendJSON(res, 400, { error: 'Provide name or email to update' });
+
+            if (name) user.name = name;
+            if (email) user.email = email;
+
+            return sendJSON(res, 200, { message: 'User updated successfully', user });
+        } catch {
+            return sendJSON(res, 400, { error: 'Invalid JSON' });
+        }
+    }
+    
+    // Fallback for unknown routes
+    sendJSON(res, 404, { error: 'Route not found' });
 });
 
-// Start the server
-const PORT = 3004;
-server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+// Start server
+server.listen(3004, () => {
+    console.log('Server running at http://localhost:3004');
 });
