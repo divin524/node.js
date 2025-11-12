@@ -84,7 +84,6 @@ app.patch('/users/:id', (req, res) => {
     });
 });
 
-
 // DELETE /Delete user by ID
 app.delete('/users/:id', (req, res) => {
     const { id } = req.params;
