@@ -62,6 +62,22 @@ app.put('/users/:id', (req, res) => {
     });
 });
 
+// DELETE /users/:id endpoint
+app.delete('/users/:id', (req, res) => {
+    const { id } = req.params;
+    
+    // Find the index of the user
+    const userIndex = users.findIndex(u => u.id === id);
+
+    if (userIndex === -1)
+        return res.status(404).json({ error: 'User not found' });
+
+    // Remove user from array 
+    users.splice (userIndex, 1);
+    res.json({ message: 'User deleted successfully' });
+
+})
+
 // Start the server
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
