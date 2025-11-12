@@ -92,13 +92,13 @@ const server = http.createServer(async (req, res) => {
         if (!user) return sendJSON(res,404, { error: 'User not found'});
         try {
             const body = await getRequestBody(req);
-            const { name, email } = body;
-            if (!name && !email) return sendJSON(res,404, {error: 'Provide name or email to update'});
+            const { name, email } = JSON.parse(body);
+            if (!name && !email) return sendJSON(res,400, {error: 'Provide name or email to update'});
             if (name) user.name = name;
             if (email) user.email = email;
             return sendJSON(res,200, { message: 'User updated successfully', user});
         } catch {
-            return sendJSON(res,404, { error: 'Invaild JSON'});
+            return sendJSON(res,400, { error: 'Invalid JSON'});
         }
     }
 
