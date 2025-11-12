@@ -62,10 +62,10 @@ app.put('/users/:id', (req, res) => {
     });
 });
 
-// DELETE /users/:id endpoint
+// DELETE /Delete user by ID
 app.delete('/users/:id', (req, res) => {
     const { id } = req.params;
-    
+
     // Find the index of the user
     const userIndex = users.findIndex(u => u.id === id);
 

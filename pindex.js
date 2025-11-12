@@ -84,6 +84,15 @@ const server = http.createServer(async (req, res) => {
             return sendJSON(res, 400, { error: 'Invalid JSON' });
         }
     }
+
+    //DELETE /users/id - Delete a user by ID
+    if (method === 'DELETE' && pathname.startsWith('/users/')) {
+        const id = pathname.split('/')[2];
+        const userIndex = users.findIndex(u => u.id === id);
+        if (userIndex === -1) return sendJSON(res,404, { error: 'User not found' });
+        users.splice(userIndex, 1);
+        return sendJSON(res,200, { message: 'User deleted sucessfully' });
+    }
     
     // Fallback for unknown routes
     sendJSON(res, 404, { error: 'Route not found' });
