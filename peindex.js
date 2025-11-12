@@ -62,6 +62,29 @@ app.put('/users/:id', (req, res) => {
     });
 });
 
+// PATCH / Partially update user by ID
+app.patch('/users/:id', (req, res) => {
+    const { id } = req.params; // Get ID from URL
+    const user = users.find(u => u.id === id); // Find user
+
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Extract fields from request body
+    const { name, email } = req.body;
+
+    // Update only the fields that are provided
+    if (name) user.name = name;
+    if (email) user.email = email;
+
+    res.json({
+        message: 'User updated successfully',
+        user
+    });
+});
+
+
 // DELETE /Delete user by ID
 app.delete('/users/:id', (req, res) => {
     const { id } = req.params;
