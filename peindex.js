@@ -70,11 +70,8 @@ app.patch('/users/:id', (req, res) => {
     if (!user) {
         return res.status(404).json({ error: 'User not found' });
     }
-
-    // Extract fields from request body
     const { name, email } = req.body;
-
-    // Update only the fields that are provided
+    // Update only the fields 
     if (name) user.name = name;
     if (email) user.email = email;
 
