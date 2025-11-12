@@ -57,7 +57,7 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, 200, users);
     }
 
-    // GET /users/:id - Get a user by ID
+    // GET /users/id - Get a user by ID
     if (method === 'GET' && pathname.startsWith('/users/')) {
         const id = pathname.split('/')[2];
         const user = users.find(u => u.id === id);
@@ -65,7 +65,7 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, 200, user);
     }
 
-    // PUT /users/:id - Update a user by ID
+    // PUT /users/id - Update a user by ID
     if (method === 'PUT' && pathname.startsWith('/users/')) {
         const id = pathname.split('/')[2];
         const user = users.find(u => u.id === id);
@@ -82,6 +82,23 @@ const server = http.createServer(async (req, res) => {
             return sendJSON(res, 200, { message: 'User updated successfully', user });
         } catch {
             return sendJSON(res, 400, { error: 'Invalid JSON' });
+        }
+    }
+
+    //PATCH /users/id - Partially update a user by ID
+    if (method === 'PATCH' && pathname.startsWith('/users/')){
+        const id = pathname.split('/')[2];
+        const user = users.find(u => u.id === id);
+        if (!user) return sendJSON(res,404, { error: 'User not found'});
+        try {
+            const body = await getRequestBody(req);
+            const { name, email } = body;
+            if (!name && !email) return sendJSON(res,404, {error: 'Provide name or email to update'});
+            if (name) user.name = name;
+            if (email) user.email = email;
+            return sendJSON(res,200, { message: 'User updated successfully', user});
+        } catch {
+            return sendJSON(res,404, { error: 'Invaild JSON'});
         }
     }
 
